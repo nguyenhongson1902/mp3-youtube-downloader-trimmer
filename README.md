@@ -8,6 +8,10 @@ The app is currently being hosted on Google Firebase, you can check it out with 
 
 `https://mp3--downloader-trimmer.web.app/`
 
+If the hosted app doesn't work, you can try using the local app by commanding:
+
+`python main.py`
+
 ### How to use this app?
 
 - Fill in a YouTube URL, click `Download` button to download the original file converted to MP3 file.
