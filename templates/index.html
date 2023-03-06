@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>YouTube Downloader and Trimmer</title>
+  </head>
+  <body>
+    <h1>MP3 YouTube Downloader and Trimmer</h1>
+    <form action="/download" method="post">
+      <label for="url">YouTube URL:</label>
+      <input type="text" name="url" id="url" />
+      <input type="submit" value="Download" />
+    </form>
+    <form action="/trim" method="post">
+      <label for="initial">Initial time:</label>
+      <input type="text" name="initial" id="initial" />
+      <label for="final">Final time:</label>
+      <input type="text" name="final" id="final" />
+      <input type="submit" value="Trim" />
+    </form>
+  </body>
+</html>
