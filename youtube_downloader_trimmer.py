@@ -130,9 +130,9 @@ def main():
         trimmed_filename = str(sys.argv[4]) + ".mp3"
     print("Process concluded successfully. Saving trimmed file as ", trimmed_filename)
     # saves file with newer filename
-    trimmed_file.export(trimmed_filename, format="mp3")
+    trimmed_file.export("./output/" + trimmed_filename, format="mp3")
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
 
