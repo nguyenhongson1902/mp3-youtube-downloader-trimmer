@@ -72,9 +72,10 @@ def download():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/health')
+@app.route('/health', methods=['GET', 'HEAD'])
 def health_check():
-    return jsonify({'status': 'healthy'}), 200
+    """Simple health check endpoint that handles both GET and HEAD requests for UptimeRobot."""
+    return jsonify({'status': 'alive'}), 200
 
 def cleanup_file(filepath):
     """Remove file after download"""
