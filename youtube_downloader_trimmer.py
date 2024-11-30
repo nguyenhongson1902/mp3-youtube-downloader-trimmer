@@ -100,6 +100,7 @@ def is_valid_filename(filename):
 def main():
     """
     Tutorial: python youtube_downloader_trimmer.py 'https://www.youtube.com/watch?v=8OAPLk20epo' 9:51 14:04
+    If you want to save the trimmed file with a different name, you can add a fourth argument with the name you want.
     """
     if (not len(sys.argv) > 1):
         print("Please insert a multimedia-platform URL supported by yt-dlp as your first argument.")
@@ -124,7 +125,7 @@ def main():
 
     filename = newest_mp3_filename()
     trimmed_file = get_trimmed(filename, initial, final)
-    trimmed_filename = "".join([filename.split(".mp3")[0], "- TRIM.mp3"])
+    trimmed_filename = "".join([filename.split(".mp3")[0], "- TRIM.mp3"]) # default name of trimmed file
     
     if len(sys.argv) == 5 and is_valid_filename(str(sys.argv[4])):
         trimmed_filename = str(sys.argv[4]) + ".mp3"

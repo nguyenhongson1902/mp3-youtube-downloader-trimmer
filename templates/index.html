@@ -1,21 +1,164 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>YouTube Downloader and Trimmer</title>
-  </head>
-  <body>
-    <h1>MP3 YouTube Downloader and Trimmer</h1>
-    <form action="/download" method="post">
-      <label for="url">YouTube URL:</label>
-      <input type="text" name="url" id="url" />
-      <input type="submit" value="Download" />
-    </form>
-    <form action="/trim" method="post">
-      <label for="initial">Initial time:</label>
-      <input type="text" name="initial" id="initial" />
-      <label for="final">Final time:</label>
-      <input type="text" name="final" id="final" />
-      <input type="submit" value="Trim" />
-    </form>
-  </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP3 Downloader & Trimmer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .time-format {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 3px;
+        }
+        #statusMessage {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
+        .loading {
+            background-color: #d9edf7;
+            color: #31708f;
+            border: 1px solid #bce8f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MP3 Downloader & Trimmer</h1>
+        
+        <div class="instructions">
+            <h2>How to use:</h2>
+            <ol>
+                <li>Paste a YouTube URL in the input field below</li>
+                <li>If you want to trim the audio, enter the start and end times (in HH:MM:SS or MM:SS)</li>
+                <li>Leave the time fields empty if you want the full audio</li>
+                <li>Click "Download" to get your MP3</li>
+            </ol>
+        </div>
+
+        <form id="downloadForm">
+            <div class="form-group">
+                <label for="youtubeUrl">YouTube URL:</label>
+                <input type="text" id="youtubeUrl" name="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." required>
+            </div>
+
+            <div class="form-group">
+                <label for="startTime">Start Time:</label>
+                <input type="text" id="startTime" name="startTime" 
+                       placeholder="HH:MM:SS or MM:SS" 
+                       pattern="^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$">
+                <div class="time-format">For example: 01:19:02 or 19:02</div>
+            </div>
+
+            <div class="form-group">
+                <label for="endTime">End Time:</label>
+                <input type="text" id="endTime" name="endTime" 
+                       placeholder="HH:MM:SS or MM:SS" 
+                       pattern="^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$">
+                <div class="time-format">For example: 01:21:05 or 20:10</div>
+            </div>
+
+            <button type="submit">Download</button>
+        </form>
+        <div id="statusMessage"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:5000';
+
+        document.getElementById('downloadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const statusDiv = document.getElementById('statusMessage');
+            const form = e.target;
+            
+            // Show loading message
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'loading';
+            statusDiv.textContent = 'Processing your request... This might take a few minutes depending on the video length.';
+
+            try {
+                // Get form values
+                const url = form.youtubeUrl.value;
+                const initial = form.startTime.value;
+                const final = form.endTime.value;
+
+                // Make API request
+                const response = await fetch(`${API_BASE_URL}/download`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url, initial, final }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    statusDiv.className = 'success';
+                    statusDiv.textContent = data.message;
+                    
+                    if (data.download_ready) {
+                        // Add download notification
+                        setTimeout(() => {
+                            statusDiv.textContent = 'Download completed! Check your downloads folder.';
+                        }, 3000); // Show completion message after 3 seconds
+                        window.location.href = `${API_BASE_URL}/download-file/${data.filename}`;
+                    }
+                } else {
+                    statusDiv.className = 'error';
+                    statusDiv.textContent = data.error || 'An error occurred';
+                }
+            } catch (error) {
+                statusDiv.className = 'error';
+                statusDiv.textContent = 'An error occurred while processing your request';
+            }
+        });
+    </script>
+</body>
 </html>
