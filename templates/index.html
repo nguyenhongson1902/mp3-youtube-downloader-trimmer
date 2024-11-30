@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MP3 Downloader & Trimmer</title>
+    <link rel="icon" type="image/png" href="../images/favicon.png">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -66,11 +67,19 @@
             color: #31708f;
             border: 1px solid #bce8f1;
         }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 0.8em;
+            color: #666;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>MP3 Downloader & Trimmer</h1>
+        <h1>MP3 YouTube Downloader & Trimmer</h1>
         
         <div class="instructions">
             <h2>How to use:</h2>
@@ -101,12 +110,16 @@
                 <input type="text" id="endTime" name="endTime" 
                        placeholder="HH:MM:SS or MM:SS" 
                        pattern="^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$">
-                <div class="time-format">For example: 01:21:05 or 20:10</div>
+                <div class="time-format">For example: 01:19:07 or 19:07</div>
             </div>
 
             <button type="submit">Download</button>
         </form>
         <div id="statusMessage"></div>
+        
+        <div class="footer">
+            <p>&copy; 2024 Son Nguyen. All rights reserved.</p>
+        </div>
     </div>
 
     <script>
