@@ -12,9 +12,10 @@ import os
 app = Flask(__name__)
 CORS(app, resources={
     r"/*": {
-        "origins": "*",
-        "methods": ["GET", "POST"],
-        "allow_headers": ["Content-Type"]
+        "origins": ["http://127.0.0.1:5500", "http://localhost:5500"],  # Add your frontend origin
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
     }
 })
 
@@ -71,6 +72,10 @@ def download():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/health')
+def health_check():
+    return jsonify({'status': 'healthy'}), 200
+
 def cleanup_file(filepath):
     """Remove file after download"""
     try:
@@ -106,5 +111,5 @@ def download_file(filename):
 if __name__ == '__main__':
     if not os.path.exists('output'):
         os.makedirs('output')
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5051))
     app.run(host='0.0.0.0', port=port)

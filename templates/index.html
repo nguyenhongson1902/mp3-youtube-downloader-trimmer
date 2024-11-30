@@ -110,7 +110,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://127.0.0.1:5000';
+        const API_BASE_URL = 'http://127.0.0.1:5051';
 
         document.getElementById('downloadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -134,6 +134,8 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    mode: 'cors',  // Add this line
+                    credentials: 'include',  // Add this line
                     body: JSON.stringify({ url, initial, final }),
                 });
 
