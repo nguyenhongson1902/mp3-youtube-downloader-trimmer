@@ -27,13 +27,9 @@ def setup_cookies():
                     f.write(decoded_content)
                 print("Vercel: Cookie file created successfully")
         elif os.environ.get('RENDER'):
-            # Render: Cookies should already be mounted at /etc/secrets
-            if os.path.exists('/etc/secrets/youtube.com_cookies.txt'):
-                print("Render: Cookie file found")
-            else:
-                print("Render: Cookie file not found")
+            # For Render, cookie copying is handled in get_cookie_path()
+            print("Render: Cookie handling configured")
         else:
-            # Local development
             print("Local development: Using local cookie file")
     except Exception as e:
         print(f"Error setting up cookies: {e}")

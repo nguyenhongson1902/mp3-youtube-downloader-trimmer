@@ -8,7 +8,13 @@ from pydub import AudioSegment # only audio operations
 def get_cookie_path():
     """Get cookie path based on environment"""
     if os.environ.get('RENDER'):
-        return '/etc/secrets/youtube.com_cookies.txt'
+        # Use /tmp directory instead of /etc/secrets for Render
+        source = '/etc/secrets/youtube.com_cookies.txt'
+        dest = '/tmp/youtube.com_cookies.txt'
+        if os.path.exists(source):
+            with open(source, 'rb') as src, open(dest, 'wb') as dst:
+                dst.write(src.read())
+        return dest
     elif os.environ.get('VERCEL'):
         return '/tmp/youtube.com_cookies.txt'
     return 'youtube.com_cookies.txt'  # local development
