@@ -39,7 +39,7 @@ def setup_cookies():
 def serve_frontend():
     return send_from_directory(app.static_folder, 'index.html')
 
-def process_download(url, initial, final):
+def process_download(url, initial, final, result_dict):
     try:
         # Download the audio first
         download_audio(url)
@@ -58,11 +58,13 @@ def process_download(url, initial, final):
             trimmed_file = get_trimmed(output_filename, initial, final)
             trimmed_filename = os.path.join(output_dir, os.path.basename(filename).split(".mp3")[0] + "-TRIM.mp3")
             trimmed_file.export(trimmed_filename, format="mp3")
-            return trimmed_filename
-        return output_filename
+            result_dict['filename'] = trimmed_filename
+        else:
+            result_dict['filename'] = output_filename
+        result_dict['success'] = True
     except Exception as e:
-        print(f"Download process error: {str(e)}")
-        raise e
+        result_dict['error'] = str(e)
+        result_dict['success'] = False
 
 @app.route('/download', methods=['POST'])
 def download():
@@ -81,20 +83,34 @@ def download():
         if initial and final and not is_valid_format(initial, final):
             return jsonify({'success': False, 'error': 'Invalid time format'})
 
+        # Use a dictionary to store results from the thread
+        result_dict = {'success': False, 'filename': None, 'error': None}
+        
         # Process download in a separate thread with timeout
-        thread = threading.Thread(target=process_download, args=(url, initial, final))
+        thread = threading.Thread(
+            target=process_download, 
+            args=(url, initial, final, result_dict)
+        )
         thread.start()
-        thread.join(timeout=240)  # 4 minutes timeout
+        thread.join(timeout=500)  # 8.3 minutes timeout
         
         if thread.is_alive():
-            return jsonify({'success': False, 'error': 'Request timed out. Please try again with a shorter video.'})
-            
-        filename = process_download(url, initial, final)
+            thread.daemon = True  # Allow thread to be terminated
+            return jsonify({
+                'success': False, 
+                'error': 'Request timed out. Please try again with a shorter video.'
+            })
         
+        if not result_dict['success']:
+            return jsonify({
+                'success': False,
+                'error': result_dict.get('error', 'Unknown error occurred')
+            })
+            
         return jsonify({
             'success': True,
             'message': 'File processed successfully! Your file will start downloading shortly.',
-            'filename': filename,
+            'filename': result_dict['filename'],
             'download_ready': True
         })
     

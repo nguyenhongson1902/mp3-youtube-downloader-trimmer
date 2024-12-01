@@ -1,4 +1,3 @@
-
 services:
   - type: web
     name: mp3-downloader-trimmer
@@ -7,4 +6,9 @@ services:
     startCommand: gunicorn -c gunicorn_config.py api.index:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.0
+        value: 3.10.0
+      - key: MAX_THREADS
+        value: 2
+      - key: WEB_CONCURRENCY
+        value: 1
+    plan: free

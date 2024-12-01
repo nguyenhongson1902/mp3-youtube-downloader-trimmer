@@ -41,10 +41,16 @@ def download_audio(yt_url):
             'preferredquality': '192'
         }],
         'cookiefile': get_cookie_path(),
-        'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s')
+        'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
+        'socket_timeout': 300,
+        'retries': 3
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([yt_url])
+        try:
+            ydl.download([yt_url])
+        except Exception as e:
+            print(f"Download error: {str(e)}")
+            raise
 
 def newest_mp3_filename():
     # lists all mp3s in temporary directory
