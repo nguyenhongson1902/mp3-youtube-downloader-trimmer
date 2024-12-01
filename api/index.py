@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
+import threading
 from youtube_downloader_trimmer import (
     download_audio, 
     get_trimmed, 
@@ -38,6 +39,31 @@ def setup_cookies():
 def serve_frontend():
     return send_from_directory(app.static_folder, 'index.html')
 
+def process_download(url, initial, final):
+    try:
+        # Download the audio first
+        download_audio(url)
+        filename = newest_mp3_filename()
+        
+        # Create output directory in /tmp for cloud platforms
+        output_dir = '/tmp/output' if (os.environ.get('VERCEL') or os.environ.get('RENDER')) else 'output'
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        
+        # Move the downloaded file to output directory
+        output_filename = os.path.join(output_dir, os.path.basename(filename))
+        shutil.move(filename, output_filename)
+        
+        if initial and final:
+            trimmed_file = get_trimmed(output_filename, initial, final)
+            trimmed_filename = os.path.join(output_dir, os.path.basename(filename).split(".mp3")[0] + "-TRIM.mp3")
+            trimmed_file.export(trimmed_filename, format="mp3")
+            return trimmed_filename
+        return output_filename
+    except Exception as e:
+        print(f"Download process error: {str(e)}")
+        raise e
+
 @app.route('/download', methods=['POST'])
 def download():
     try:
@@ -52,40 +78,23 @@ def download():
         if not is_valid(url):
             return jsonify({'success': False, 'error': 'Invalid YouTube URL'})
         
-        # Create output directory in /tmp for Vercel
-        output_dir = '/tmp/output' if os.environ.get('VERCEL') else 'output'
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        if initial and final and not is_valid_format(initial, final):
+            return jsonify({'success': False, 'error': 'Invalid time format'})
+
+        # Process download in a separate thread with timeout
+        thread = threading.Thread(target=process_download, args=(url, initial, final))
+        thread.start()
+        thread.join(timeout=240)  # 4 minutes timeout
         
-        # Download the audio first
-        download_audio(url)
-        filename = newest_mp3_filename()
-        
-        # Move the downloaded file to output directory
-        output_filename = os.path.join(output_dir, os.path.basename(filename))
-        shutil.move(filename, output_filename)
-        
-        # If trimming parameters are provided, create trimmed version
-        if initial and final:
-            if not is_valid_format(initial, final):
-                return jsonify({'success': False, 'error': 'Invalid time format'})
-                
-            trimmed_file = get_trimmed(output_filename, initial, final)
-            trimmed_filename = os.path.join(output_dir, filename.split(".mp3")[0] + "-TRIM.mp3")
-            trimmed_file.export(trimmed_filename, format="mp3")
+        if thread.is_alive():
+            return jsonify({'success': False, 'error': 'Request timed out. Please try again with a shorter video.'})
             
-            return jsonify({
-                'success': True,
-                'message': 'File downloaded and trimmed successfully! Your file will start downloading shortly.',
-                'filename': trimmed_filename,
-                'download_ready': True
-            })
+        filename = process_download(url, initial, final)
         
-        # Return the full version for download    
         return jsonify({
             'success': True,
-            'message': 'File downloaded successfully! Your file will start downloading shortly.',
-            'filename': output_filename,
+            'message': 'File processed successfully! Your file will start downloading shortly.',
+            'filename': filename,
             'download_ready': True
         })
     

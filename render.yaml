@@ -1,0 +1,10 @@
+
+services:
+  - type: web
+    name: mp3-downloader-trimmer
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -c gunicorn_config.py api.index:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
