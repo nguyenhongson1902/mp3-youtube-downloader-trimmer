@@ -11,10 +11,22 @@ def get_cookie_path():
         # Use /tmp directory instead of /etc/secrets for Render
         source = '/etc/secrets/youtube.com_cookies.txt'
         dest = '/tmp/youtube.com_cookies.txt'
-        if os.path.exists(source):
-            with open(source, 'rb') as src, open(dest, 'wb') as dst:
-                dst.write(src.read())
-        return dest
+        try:
+            if os.path.exists(source):
+                with open(source, 'rb') as src:
+                    content = src.read()
+                    print(f"Cookie file found, size: {len(content)} bytes")
+                with open(dest, 'wb') as dst:
+                    dst.write(content)
+                # Set proper permissions
+                os.chmod(dest, 0o644)
+                print(f"Cookie file copied to {dest}")
+                return dest
+            else:
+                print(f"Cookie file not found at {source}")
+        except Exception as e:
+            print(f"Error handling cookies: {e}")
+            raise
     elif os.environ.get('VERCEL'):
         return '/tmp/youtube.com_cookies.txt'
     return 'youtube.com_cookies.txt'  # local development
@@ -33,6 +45,17 @@ def get_temp_dir():
 # downloads yt_url to the same directory from which the script runs
 def download_audio(yt_url):
     temp_dir = get_temp_dir()
+    cookie_path = get_cookie_path()
+    print(f"Using cookie path: {cookie_path}")
+    
+    if os.environ.get('RENDER'):
+        # Verify cookie file
+        if os.path.exists(cookie_path):
+            with open(cookie_path, 'r') as f:
+                print(f"Cookie file content preview: {f.readline()[:50]}...")
+        else:
+            print(f"Warning: Cookie file not found at {cookie_path}")
+    
     ydl_opts = {
         'format': 'bestaudio/best',
         'postprocessors': [{
@@ -40,10 +63,11 @@ def download_audio(yt_url):
             'preferredcodec': 'mp3',
             'preferredquality': '192'
         }],
-        'cookiefile': get_cookie_path(),
+        'cookiefile': cookie_path,
         'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
         'socket_timeout': 300,
-        'retries': 3
+        'retries': 3,
+        'verbose': True  # Add verbose output for debugging
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:

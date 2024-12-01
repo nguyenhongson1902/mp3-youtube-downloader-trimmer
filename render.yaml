@@ -2,7 +2,9 @@ services:
   - type: web
     name: mp3-downloader-trimmer
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      pip install -r requirements.txt
+      chmod 644 /etc/secrets/youtube.com_cookies.txt
     startCommand: gunicorn -c gunicorn_config.py api.index:app
     envVars:
       - key: PYTHON_VERSION
