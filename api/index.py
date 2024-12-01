@@ -1,5 +1,4 @@
-
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 from youtube_downloader_trimmer import (
     download_audio, 
@@ -10,12 +9,12 @@ from youtube_downloader_trimmer import (
 )
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../static')
 CORS(app)
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+def serve_frontend():
+    return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/download', methods=['POST'])
 def download():

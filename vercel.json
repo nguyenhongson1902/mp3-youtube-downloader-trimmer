@@ -1,10 +1,15 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/index.py", "use": "@vercel/python" }
+    { "src": "api/index.py", "use": "@vercel/python" },
+    { "src": "static/**", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "api/index.py" }
+    { "src": "/static/(.*)", "dest": "/static/$1" },
+    { "src": "/download", "dest": "api/index.py" },
+    { "src": "/download-file/(.*)", "dest": "api/index.py" },
+    { "src": "/health", "dest": "api/index.py" },
+    { "src": "/(.*)", "dest": "/static/index.html" }
   ],
   "env": {
     "PYTHONPATH": "."
