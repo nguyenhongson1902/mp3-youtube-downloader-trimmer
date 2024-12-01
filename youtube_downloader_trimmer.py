@@ -52,12 +52,17 @@ def download_audio(yt_url):
     if os.environ.get('RENDER'):
         if os.path.exists(cookie_path):
             with open(cookie_path, 'r') as f:
-                print(f"Cookie file content preview: {f.readline()[:50]}...")
+                cookie_content = f.read()
+                print(f"Cookie file content preview: {cookie_content[:100]}...")
+                if not cookie_content.strip():
+                    print("Warning: Cookie file is empty")
         else:
             print(f"Warning: Cookie file not found at {cookie_path}")
+
+    user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     
     ydl_opts = {
-        'format': 'm4a/bestaudio/best',  # Try m4a first, then fallback
+        'format': 'bestaudio/best',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
@@ -66,44 +71,58 @@ def download_audio(yt_url):
         'cookiefile': cookie_path,
         'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
         'socket_timeout': 300,
-        'retries': 5,  # Increase retries
+        'retries': 5,
         'verbose': True,
-        'quiet': False,  # Show all messages
+        'quiet': False,
         'no_warnings': False,
+        'user_agent': user_agent,
+        'headers': {
+            'User-Agent': user_agent,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-us,en;q=0.5',
+            'Sec-Fetch-Mode': 'navigate',
+        },
         'extractor_args': {
             'youtube': {
-                'player_client': ['android'],  # Try android client
-                'player_skip': ['webpage', 'config'],  # Skip these to avoid detection
+                'player_client': ['android', 'web'],
+                'player_skip': [],
+                'player_client_name': ['android', 'web'],
+                'extract_flat': 'in_playlist'
             }
         },
-        'ignoreerrors': False,
-        'no_color': True
+        'http_headers': {
+            'User-Agent': user_agent,
+        }
     }
     
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # Pre-check the video info
-            try:
-                info = ydl.extract_info(yt_url, download=False)
-                print(f"Video title: {info.get('title')}")
-                print(f"Available formats: {[f['format_id'] for f in info['formats']]}")
-            except Exception as e:
-                print(f"Error during info extraction: {str(e)}")
-                raise
-                
-            # Attempt download
-            ydl.download([yt_url])
-            
-    except Exception as e:
-        print(f"Download error: {str(e)}")
-        # Try alternate format if first attempt fails
-        ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best'
+    for attempt, format_option in enumerate([
+        'bestaudio/best',
+        'bestaudio[ext=m4a]/bestaudio/best',
+        '251/250/249/140/bestaudio'
+    ]):
         try:
+            print(f"\nAttempt {attempt + 1} with format: {format_option}")
+            ydl_opts['format'] = format_option
+            
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                # Pre-check the video info
+                try:
+                    info = ydl.extract_info(yt_url, download=False)
+                    print(f"Video title: {info.get('title')}")
+                    if info.get('formats'):
+                        print(f"Available formats: {[f['format_id'] for f in info['formats']]}")
+                except Exception as e:
+                    print(f"Error during info extraction: {str(e)}")
+                    continue
+                
+                # Attempt download
                 ydl.download([yt_url])
-        except Exception as e2:
-            print(f"Second attempt failed: {str(e2)}")
-            raise Exception(f"Download failed after retries: {str(e2)}")
+                return  # If successful, exit the function
+                
+        except Exception as e:
+            print(f"Attempt {attempt + 1} failed: {str(e)}")
+            if attempt == 2:  # Last attempt
+                raise Exception(f"Download failed after all attempts: {str(e)}")
 
 def newest_mp3_filename():
     # lists all mp3s in temporary directory

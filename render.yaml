@@ -5,6 +5,8 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       chmod 644 /etc/secrets/youtube.com_cookies.txt
+      cat /etc/secrets/youtube.com_cookies.txt > /tmp/youtube.com_cookies.txt
+      chmod 644 /tmp/youtube.com_cookies.txt
     startCommand: gunicorn -c gunicorn_config.py api.index:app
     envVars:
       - key: PYTHON_VERSION
