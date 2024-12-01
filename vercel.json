@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/youtube_downloader_trimmer.py" }
+  ]
+}
