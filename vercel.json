@@ -13,5 +13,8 @@
   ],
   "env": {
     "PYTHONPATH": "."
-  }
+  },
+  "files": [
+    "youtube.com_cookies.txt"
+  ]
 }

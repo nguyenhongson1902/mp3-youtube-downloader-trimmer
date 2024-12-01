@@ -70,3 +70,8 @@ __pycache__/
 .DS_Store
 
 venv/
+
+.env
+
+# ...existing entries...
+youtube.com_cookies.txt

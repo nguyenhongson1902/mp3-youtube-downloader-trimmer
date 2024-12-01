@@ -8,9 +8,35 @@ from youtube_downloader_trimmer import (
     is_valid_format
 )
 import os
+import shutil
+import base64
 
 app = Flask(__name__, static_folder='../static')
 CORS(app)
+
+@app.before_first_request
+def setup_cookies():
+    """Setup cookies based on environment"""
+    try:
+        if os.environ.get('VERCEL'):
+            # Vercel: Use environment variable
+            cookie_content = os.environ.get('YOUTUBE_COOKIES', '')
+            if cookie_content:
+                decoded_content = base64.b64decode(cookie_content)
+                with open('/tmp/youtube.com_cookies.txt', 'wb') as f:
+                    f.write(decoded_content)
+                print("Vercel: Cookie file created successfully")
+        elif os.environ.get('RENDER'):
+            # Render: Cookies should already be mounted at /etc/secrets
+            if os.path.exists('/etc/secrets/youtube.com_cookies.txt'):
+                print("Render: Cookie file found")
+            else:
+                print("Render: Cookie file not found")
+        else:
+            # Local development
+            print("Local development: Using local cookie file")
+    except Exception as e:
+        print(f"Error setting up cookies: {e}")
 
 @app.route('/')
 def serve_frontend():

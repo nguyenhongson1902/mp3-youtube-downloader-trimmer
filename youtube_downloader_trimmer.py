@@ -5,6 +5,14 @@ import sys
 import re
 from pydub import AudioSegment # only audio operations
 
+def get_cookie_path():
+    """Get cookie path based on environment"""
+    if os.environ.get('RENDER'):
+        return '/etc/secrets/youtube.com_cookies.txt'
+    elif os.environ.get('VERCEL'):
+        return '/tmp/youtube.com_cookies.txt'
+    return 'youtube.com_cookies.txt'  # local development
+
 # downloads yt_url to the same directory from which the script runs
 def download_audio(yt_url):
     ydl_opts = {
@@ -13,7 +21,8 @@ def download_audio(yt_url):
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': '192'
-        }], 'cookiefile': 'www.youtube.com_cookies.txt',
+        }],
+        'cookiefile': get_cookie_path()
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([yt_url])
