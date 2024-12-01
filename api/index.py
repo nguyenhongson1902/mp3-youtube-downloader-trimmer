@@ -52,13 +52,18 @@ def download():
         if not is_valid(url):
             return jsonify({'success': False, 'error': 'Invalid YouTube URL'})
         
+        # Create output directory in /tmp for Vercel
+        output_dir = '/tmp/output' if os.environ.get('VERCEL') else 'output'
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        
         # Download the audio first
         download_audio(url)
         filename = newest_mp3_filename()
         
         # Move the downloaded file to output directory
-        output_filename = os.path.join('output', os.path.basename(filename))
-        os.rename(filename, output_filename)  # This line moves the file to output folder
+        output_filename = os.path.join(output_dir, os.path.basename(filename))
+        shutil.move(filename, output_filename)
         
         # If trimming parameters are provided, create trimmed version
         if initial and final:
@@ -66,7 +71,7 @@ def download():
                 return jsonify({'success': False, 'error': 'Invalid time format'})
                 
             trimmed_file = get_trimmed(output_filename, initial, final)
-            trimmed_filename = os.path.join('output', filename.split(".mp3")[0] + "-TRIM.mp3")
+            trimmed_filename = os.path.join(output_dir, filename.split(".mp3")[0] + "-TRIM.mp3")
             trimmed_file.export(trimmed_filename, format="mp3")
             
             return jsonify({

@@ -19,8 +19,20 @@ def get_cookie_path():
         return '/tmp/youtube.com_cookies.txt'
     return 'youtube.com_cookies.txt'  # local development
 
+def get_temp_dir():
+    """Get appropriate temporary directory based on environment"""
+    if os.environ.get('VERCEL') or os.environ.get('RENDER'):
+        temp_dir = '/tmp/downloads'
+    else:
+        temp_dir = './downloads'
+    
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
+    return temp_dir
+
 # downloads yt_url to the same directory from which the script runs
 def download_audio(yt_url):
+    temp_dir = get_temp_dir()
     ydl_opts = {
         'format': 'bestaudio/best',
         'postprocessors': [{
@@ -28,14 +40,16 @@ def download_audio(yt_url):
             'preferredcodec': 'mp3',
             'preferredquality': '192'
         }],
-        'cookiefile': get_cookie_path()
+        'cookiefile': get_cookie_path(),
+        'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s')
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([yt_url])
 
 def newest_mp3_filename():
-    # lists all mp3s in local directory
-    list_of_mp3s = glob.glob('./*.mp3')
+    # lists all mp3s in temporary directory
+    temp_dir = get_temp_dir()
+    list_of_mp3s = glob.glob(os.path.join(temp_dir, '*.mp3'))
     # returns mp3 with highest timestamp value
     return max(list_of_mp3s, key=os.path.getctime) # returns the URL in the list, which has the highest creation time
 
