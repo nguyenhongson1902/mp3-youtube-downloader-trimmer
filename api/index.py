@@ -41,28 +41,37 @@ def serve_frontend():
 
 def process_download(url, initial, final, result_dict):
     try:
+        print(f"Starting download process for URL: {url}")
         # Download the audio first
         download_audio(url)
+        print("Download completed successfully")
+        
         filename = newest_mp3_filename()
+        print(f"Found newest file: {filename}")
         
         # Create output directory in /tmp for cloud platforms
         output_dir = '/tmp/output' if (os.environ.get('VERCEL') or os.environ.get('RENDER')) else 'output'
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
+            print(f"Created output directory: {output_dir}")
         
         # Move the downloaded file to output directory
         output_filename = os.path.join(output_dir, os.path.basename(filename))
         shutil.move(filename, output_filename)
+        print(f"Moved file to: {output_filename}")
         
         if initial and final:
+            print(f"Starting trim process from {initial} to {final}")
             trimmed_file = get_trimmed(output_filename, initial, final)
             trimmed_filename = os.path.join(output_dir, os.path.basename(filename).split(".mp3")[0] + "-TRIM.mp3")
             trimmed_file.export(trimmed_filename, format="mp3")
             result_dict['filename'] = trimmed_filename
+            print(f"Trim completed: {trimmed_filename}")
         else:
             result_dict['filename'] = output_filename
         result_dict['success'] = True
     except Exception as e:
+        print(f"Error in process_download: {str(e)}")
         result_dict['error'] = str(e)
         result_dict['success'] = False
 

@@ -48,8 +48,8 @@ def download_audio(yt_url):
     cookie_path = get_cookie_path()
     print(f"Using cookie path: {cookie_path}")
     
+    # Verify cookie file if on Render
     if os.environ.get('RENDER'):
-        # Verify cookie file
         if os.path.exists(cookie_path):
             with open(cookie_path, 'r') as f:
                 print(f"Cookie file content preview: {f.readline()[:50]}...")
@@ -57,7 +57,7 @@ def download_audio(yt_url):
             print(f"Warning: Cookie file not found at {cookie_path}")
     
     ydl_opts = {
-        'format': 'bestaudio/best',
+        'format': 'm4a/bestaudio/best',  # Try m4a first, then fallback
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
@@ -66,15 +66,44 @@ def download_audio(yt_url):
         'cookiefile': cookie_path,
         'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
         'socket_timeout': 300,
-        'retries': 3,
-        'verbose': True  # Add verbose output for debugging
+        'retries': 5,  # Increase retries
+        'verbose': True,
+        'quiet': False,  # Show all messages
+        'no_warnings': False,
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android'],  # Try android client
+                'player_skip': ['webpage', 'config'],  # Skip these to avoid detection
+            }
+        },
+        'ignoreerrors': False,
+        'no_color': True
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        try:
+    
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Pre-check the video info
+            try:
+                info = ydl.extract_info(yt_url, download=False)
+                print(f"Video title: {info.get('title')}")
+                print(f"Available formats: {[f['format_id'] for f in info['formats']]}")
+            except Exception as e:
+                print(f"Error during info extraction: {str(e)}")
+                raise
+                
+            # Attempt download
             ydl.download([yt_url])
-        except Exception as e:
-            print(f"Download error: {str(e)}")
-            raise
+            
+    except Exception as e:
+        print(f"Download error: {str(e)}")
+        # Try alternate format if first attempt fails
+        ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best'
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([yt_url])
+        except Exception as e2:
+            print(f"Second attempt failed: {str(e2)}")
+            raise Exception(f"Download failed after retries: {str(e2)}")
 
 def newest_mp3_filename():
     # lists all mp3s in temporary directory
